@@ -24,7 +24,7 @@ class DownloadObject:
         self.done = 0
         self.size = details[1]
         self.content_type = details[2]
-        self.httpresponse = details[3]
+        self.http_response = details[3]
         self.id = id
 
     def checkurl(self,url):
@@ -63,18 +63,18 @@ class Idm(Frame):
 
     def createWidgets(self):
         self.path = 'C:\\'
-        self.urlLabel = Label(self,text = ' URL Here >> ',fg = 'green',font = ("hobo std",10,'bold'),width = 15,height = 5)
-        self.urlLabel.grid(row = 0,column = 0)
+        self.url_label = Label(self,text = ' URL Here >> ',fg = 'green',font = ("hobo std",10,'bold'),width = 15,height = 5)
+        self.url_label.grid(row = 0,column = 0)
         self.link = Entry(self,font = ("hobo std",10,'italic'),width = 45)
         
         self.link.insert(0,'URL')
         self.link.grid(row = 0,column = 1,columnspan = 1)
-        self.startButton = Button(self,text = 'Start Downlaod',command = self.start,width = 25,bg = 'grey',fg = 'blue',font = ("hobo std",10,'italic'))
-        self.startButton.grid(row = 1,column = 0,columnspan = 3)
+        self.start_button = Button(self,text = 'DOWNLOAD',command = self.start,width = 25,bg = 'grey',fg = 'black',font = ("hobo std",10,'bold'))
+        self.start_button.grid(row = 1,column = 0,columnspan = 3)
         
-        self.QuitButton = Button(self,text = 'Quit',bg = 'red',fg = 'white',font = ("hobo std",10,'italic'),command = self.quit,width = 10)
-        self.QuitButton.grid(row = 1)
-        optionList = ['Threads - 1','Threads - 2','Threads - 3','Threads - 4']
+        self.quit_button = Button(self,text = 'Quit',bg = 'red',fg = 'white',font = ("hobo std",10,'italic'),command = self.quit,width = 10)
+        self.quit_button.grid(row = 1)
+        option_list = ['Threads - 1','Threads - 2','Threads - 3','Threads - 4']
         self.threads = '1'
         
         # self.disppath = Label(self,text=self.path)
@@ -82,8 +82,8 @@ class Idm(Frame):
 
         temp = StringVar(self)
         temp.set('Threads - 1')
-        self.threadWidget = OptionMenu(self,temp,*optionList,command = self.setThreads)
-        self.threadWidget.grid(row = 2,column = 0)
+        self.thread_widget = OptionMenu(self,temp,*option_list,command = self.setThreads)
+        self.thread_widget.grid(row = 2,column = 0)
         
         self.progress = []
         for i in range(4):
@@ -93,46 +93,47 @@ class Idm(Frame):
         color = ['green' , 'blue' , 'red' , 'orange']
         functions = [self.openFile1,self.openFile2,self.openFile3,self.openFile4]
 
-        self.downlaodLabels = []
+        self.download_labels = []
         for i in range(4):
-            self.downlaodLabels.append(Button(self, text = str(i+1),bg = color[i] , width = 20 , 
-            							command = functions[i]))
-            self.downlaodLabels[i].grid(row=4+i,column=0)
+            self.download_labels.append(Button(self, text = str(i+1),bg = color[i] , width = 20 , 
+                                        command = functions[i]))
+            self.download_labels[i].grid(row=4+i,column=0)
 
-        self.progressSelect = [0,0,0,0]
+        self.progress_select = [0,0,0,0]
         self.format = ['B','KB','MB','GB','TB']
         self.count = 1
         self.downlaod_paths = []
         for i in range(4):
-        	self.downlaod_paths.append('C:\\')
+            self.downlaod_paths.append('C:\\')
 
 
     def openFile1(self):
-    	Popen('explorer '+self.downlaod_paths[0])
+        Popen('explorer '+self.downlaod_paths[0])
     def openFile2(self):
-    	Popen('explorer '+self.downlaod_paths[1])
+        Popen('explorer '+self.downlaod_paths[1])
     def openFile3(self):
-    	Popen('explorer '+self.downlaod_paths[2])
+        Popen('explorer '+self.downlaod_paths[2])
     def openFile4(self):
-    	Popen('explorer '+self.downlaod_paths[3])
+        Popen('explorer '+self.downlaod_paths[3])
 
     def setThreads(self,threads):
         self.threads = threads[-1]
 
-    def startDownload(self,object,path,start,end,ithread,progressSelect,ilock):
+    def startDownload(self,object,path,start,end,ithread,progress_select,ilock):
         ilock.acquire()
 
         head  =  {'Range': 'bytes = %d-%d' % (start, end)}
         try:
             r = requests.get(object.url,headers = head,stream = True,allow_redirects = True)
         except:
+            ilock.release()
             return False
         
         with open(path,'r+b') as new_file:
             new_file.seek(start)
             for chunk in r.iter_content(chunk_size = 1024):
                 object.done += len(chunk)
-                self.progress[progressSelect]["value"] = object.done
+                self.progress[progress_select]["value"] = object.done
                 new_file.write(chunk)
         
         ilock.release()
@@ -142,8 +143,6 @@ class Idm(Frame):
         temp = filedialog.askdirectory()
         if temp:
             self.path = temp
-        # self.disppath.config(text = self.path)
-        # return False
 
     def start(self):
         url = self.link.get()
@@ -169,23 +168,23 @@ class Idm(Frame):
             if size//1024**i > 0:
                 form = i
         
-        forma = self.format[form]	
+        forma = self.format[form]   
         downld = messagebox.askquestion(title = 'DownloadObject',
-        								message = 'Proceed DownloadObject ?\nSize = %.2f %s\nType = %s'%(size/1024**form,forma,object.content_type)
-        								)
+                                        message = 'Proceed DownloadObject ?\nSize = %.2f %s\nType = %s'%(size/1024**form,forma,object.content_type)
+                                        )
         if downld  ==  'no':
             self.count -= 1
             lock.release()
             return False
         
-        fileTypes = [('All files', '.*'), ('Text files', '.txt')]
+        file_types = [('All files', '.*'), ('Text files', '.txt')]
         typ = ''
         typ = object.content_type.split('/')[-1] 
 
-        filename = 'Newfile.'+typ
-        options = {'initialfile' : filename}
+        file_name = 'Newfile.'+typ
+        options = {'initialfile' : file_name}
         options['initialdir'] = self.path
-        options['filetypes'] = fileTypes
+        options['filetypes'] = file_types
 
         path = filedialog.asksaveasfile(mode = 'w',**options)
         if not path:
@@ -194,8 +193,8 @@ class Idm(Frame):
             return False
         
         absolute_path = path.name
-        filename = absolute_path.split('/')[-1]
-        filepath = "/".join(absolute_path.split('/')[:-1])
+        file_name = absolute_path.split('/')[-1]
+        file_path = "/".join(absolute_path.split('/')[:-1])
         
         if self.count >= 4:
             messagebox.showinfo(title = 'Sorry',message = "MAX DOWNLOADS REACHED")
@@ -203,50 +202,52 @@ class Idm(Frame):
             self.count -= 1
             return False
 
-        progressSelect = 0
+        progress_select = 0
         for i in range(4):
-            if not self.progressSelect[i]:
-                progressSelect = i
-                self.progressSelect[i] = True
+            if not self.progress_select[i]:
+                progress_select = i
+                self.progress_select[i] = True
                 break
 
-        self.downlaod_paths[progressSelect] = filepath
+        self.downlaod_paths[progress_select] = file_path
         threads = []
         parts = int(self.threads)
         # self.DownloadObjectS.append([False]*parts)
         
-        object.name = filename
-        splitsize = int(object.size//parts)
-        self.progress[progressSelect]["maximum"] = object.size
-        self.progress[progressSelect]["value"] = 0
-        self.downlaodLabels[progressSelect].config(text = object.name)
+        object.name = file_name
+        split_size = int(object.size//parts)
+        self.progress[progress_select]["maximum"] = object.size
+        self.progress[progress_select]["value"] = 0
+        self.download_labels[progress_select].config(text = object.name)
 
-        locks = []
+        locks = [0]*parts
         for i in range(parts):
-            s = i*splitsize
-            e = s+splitsize
-            locks.append(threading.Lock())
+            locks[i] = threading.Lock()
+
+        for i in range(parts):
+            s = i*split_size
+            e = s+split_size
             if i  ==  parts - 1:
                 e = object.size
-            threads.append(TT(target = self.startDownload,args = (object,absolute_path,s,e,i,progressSelect,locks[i])))
+            threads.append(TT(target = self.startDownload,args = (object,absolute_path,s,e,i,progress_select,locks[i])))
         
         lock.release()
         for i in range(parts):
-        	threads[i].start()
+            threads[i].start()
 
         for i in range(parts):
             threads[i].join()
 
-        return self.postDownload(object,progressSelect,locks)
+        return self.postDownload(object,progress_select,locks)
 
-    def postDownload(self,object,progressSelect,locks):
+    def postDownload(self,object,progress_select,locks):
         for i in range(len(locks)):
             locks[i].acquire()
             locks[i].release()
         
         del locks
 
-        self.progressSelect[progressSelect] = False
+        self.progress_select[progress_select] = False
         self.count -= 1
         if object.size == object.done:
             return True
@@ -257,7 +258,7 @@ class Idm(Frame):
             if retry  ==  'no':
                 return False
             else:
-            	return self.DownloadObject(object.url)
+                return self.DownloadObject(object.url)
         return True
 
     def quit(self):
